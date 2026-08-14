@@ -29,7 +29,6 @@ def load_conversations(path: Path) -> list[dict[str, Any]]:
                 result.append(data)
             elif isinstance(data.get("conversations"), list):
                 result.extend(x for x in data["conversations"] if isinstance(x, dict))
-    # Avoid duplicate objects when a directory contains the same export in multiple files.
     unique: dict[str, dict[str, Any]] = {}
     for c in result:
         key = str(c.get("conversation_id") or c.get("id") or hash(json.dumps(c, sort_keys=True, ensure_ascii=False)))
@@ -106,7 +105,9 @@ def convert(input_path: Path, output: Path) -> int:
         (conv_dir / filename).write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
         index_rows.append((date, title, cid, f"conversations/{filename}"))
     index = ["# ChatGPT conversation archive", "", f"Generated from `{input_path}`.", "", "| Date | Title | Conversation ID | File |", "|---|---|---|---|"]
-    index += [f"| {d} | {t.replace('|', '\\|')} | `{cid}` | [{Path(f).name}]({f}) |" for d,t,cid,f in index_rows]
+    for date, title, cid, file_ref in index_rows:
+        safe_title = title.replace("|", "\\|")
+        index.append(f"| {date} | {safe_title} | `{cid}` | [{Path(file_ref).name}]({file_ref}) |")
     output.mkdir(parents=True, exist_ok=True)
     (output / "index.md").write_text("\n".join(index) + "\n", encoding="utf-8")
     print(f"Converted {len(conversations)} conversations to {output}")
