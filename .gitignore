@@ -1,0 +1,8 @@
+# Never commit personal ChatGPT exports
+*.zip
+conversations.json
+export/
+archive/
+output/
+rendered/
+urls/
